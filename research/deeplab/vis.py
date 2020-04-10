@@ -290,10 +290,18 @@ def main(unused_argv):
       tf.logging.info('Visualizing with model %s', checkpoint_path)
 
       scaffold = tf.train.Scaffold(init_op=tf.global_variables_initializer())
+      
+      # WK !!!
+      session_config = tf.ConfigProto()
+      session_config.gpu_options.allow_growth=True
+      # WK!!!
+
       session_creator = tf.train.ChiefSessionCreator(
           scaffold=scaffold,
           master=FLAGS.master,
-          checkpoint_filename_with_path=checkpoint_path)
+          checkpoint_filename_with_path=checkpoint_path,
+          config=session_config) # WK !!!  
+
       with tf.train.MonitoredSession(
           session_creator=session_creator, hooks=None) as sess:
         batch = 0

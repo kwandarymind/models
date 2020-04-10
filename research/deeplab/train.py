@@ -383,6 +383,9 @@ def main(unused_argv):
             learning_rate=FLAGS.adam_learning_rate, epsilon=FLAGS.adam_epsilon)
       else:
         raise ValueError('Unknown optimizer')
+    
+    # WK!!!
+    optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(optimizer)
 
     if FLAGS.quantize_delay_step >= 0:
       if FLAGS.num_clones > 1:
@@ -426,6 +429,8 @@ def main(unused_argv):
     # Soft placement allows placing on CPU ops without GPU implementation.
     session_config = tf.ConfigProto(
         allow_soft_placement=True, log_device_placement=False)
+    # WK!!!
+    session_config.gpu_options.allow_growth=True
 
     # Start the training.
     profile_dir = FLAGS.profile_logdir
@@ -459,6 +464,7 @@ def main(unused_argv):
 
 
 if __name__ == '__main__':
+  print(tf.__version__)
   flags.mark_flag_as_required('train_logdir')
   flags.mark_flag_as_required('dataset_dir')
   tf.app.run()

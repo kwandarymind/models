@@ -1,0 +1,59 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Xception",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/wil/ml/tf/models/research/deeplab/train.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--logtostderr"
+                , "--train_split=trainval"
+                , "--model_variant=xception_65"
+                , "--output_stride=16"
+                , "--train_crop_size=513,513"
+                , "--train_batch_size=4"
+                , "--training_number_of_steps=1000"
+                , "--fine_tune_batch_norm=true"
+                , "--tf_initial_checkpoint=/home/mltrain/init_models/deeplabv3_pascal_train_aug_2018_01_04/model.ckpt"
+                , "--train_logdir=/home/mltrain/deeplabv3/0-xception_65/train"
+                , "--save_summaries_images=true"
+                , "--dataset_dir=/home/mltrain/datasets/pascal_voc/VOCdevkit/VOC2012/tfrecord"
+                , "--weight_decay=0.00004"
+                , "--decoder_output_stride=4"
+                , "--depth_multiplier=1.0"
+                , "--atrous_rates=6"
+                , "--atrous_rates=12"
+                , "--atrous_rates=18" 
+            ]
+        },
+        {
+            "name": "Python: MobilenetV2",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/wil/ml/tf/models/research/deeplab/train.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--logtostderr",
+                "--train_split=trainval",
+                "--model_variant=mobilenet_v2",
+                "--output_stride=8",
+                "--train_crop_size=513,513",
+                "--train_batch_size=8",
+                "--training_number_of_steps=1000",
+                "--fine_tune_batch_norm=true",
+                "--tf_initial_checkpoint=/home/mltrain/init_models/deeplabv3_mnv2_pascal_train_aug_2018_01_29/model.ckpt-30000",
+                "--train_logdir=/home/mltrain/deeplabv3/2.1-mobilenet_v2/train",
+                "--save_summaries_images=true",
+                "--dataset_dir=/home/mltrain/datasets/pascal_voc/VOCdevkit/VOC2012/tfrecord",
+                "--weight_decay=0.00004",
+                "--decoder_output_stride=4"
+                //    , "--depth_multiplier=0.5"
+                //    , "--atrous_rates=6"
+                //    , "--atrous_rates=12"
+                //    , "--atrous_rates=18" 
+            ]
+        }
+    ]
+}

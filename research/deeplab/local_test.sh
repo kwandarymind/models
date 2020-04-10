@@ -29,6 +29,8 @@ set -e
 # Move one-level up to tensorflow/models/research directory.
 cd ..
 
+export CUDA_VISIBLE_DEVICES=0
+
 # Update PYTHONPATH.
 export PYTHONPATH=$PYTHONPATH:`pwd`:`pwd`/slim
 
@@ -37,12 +39,12 @@ CURRENT_DIR=$(pwd)
 WORK_DIR="${CURRENT_DIR}/deeplab"
 
 # Run model_test first to make sure the PYTHONPATH is correctly set.
-python "${WORK_DIR}"/model_test.py -v
+# python "${WORK_DIR}"/model_test.py -v
 
 # Go to datasets folder and download PASCAL VOC 2012 segmentation dataset.
 DATASET_DIR="datasets"
-cd "${WORK_DIR}/${DATASET_DIR}"
-sh download_and_convert_voc2012.sh
+#cd "${WORK_DIR}/${DATASET_DIR}"
+#sh download_and_convert_voc2012.sh
 
 # Go back to original directory.
 cd "${CURRENT_DIR}"
@@ -55,24 +57,54 @@ TRAIN_LOGDIR="${WORK_DIR}/${DATASET_DIR}/${PASCAL_FOLDER}/${EXP_FOLDER}/train"
 EVAL_LOGDIR="${WORK_DIR}/${DATASET_DIR}/${PASCAL_FOLDER}/${EXP_FOLDER}/eval"
 VIS_LOGDIR="${WORK_DIR}/${DATASET_DIR}/${PASCAL_FOLDER}/${EXP_FOLDER}/vis"
 EXPORT_DIR="${WORK_DIR}/${DATASET_DIR}/${PASCAL_FOLDER}/${EXP_FOLDER}/export"
-mkdir -p "${INIT_FOLDER}"
-mkdir -p "${TRAIN_LOGDIR}"
-mkdir -p "${EVAL_LOGDIR}"
-mkdir -p "${VIS_LOGDIR}"
-mkdir -p "${EXPORT_DIR}"
+
+MODEL_SRC_DIR="${CURRENT_DIR}/deeplab"
+DATASET_DIR="/home/mltrain/datasets/pascal_voc/VOCdevkit/VOC2012"
+PASCAL_DATASET="${DATASET_DIR}/tfrecord"
+TRAINING_DIR="/home/mltrain/deeplabv3"
+CHECKPOINT_DIR="/home/mltrain/init_models"
+
+EXP_FOLDER="0-xception_65"
+TRAIN_LOGDIR="$TRAINING_DIR/${EXP_FOLDER}/train"
+EVAL_LOGDIR="$TRAINING_DIR/${EXP_FOLDER}/eval"
+
+#mkdir -p "${INIT_FOLDER}"
+#mkdir -p "${TRAIN_LOGDIR}"
+#mkdir -p "${EVAL_LOGDIR}"
+#mkdir -p "${VIS_LOGDIR}"
+#mkdir -p "${EXPORT_DIR}"
 
 # Copy locally the trained checkpoint as the initial checkpoint.
-TF_INIT_ROOT="http://download.tensorflow.org/models"
-TF_INIT_CKPT="deeplabv3_pascal_train_aug_2018_01_04.tar.gz"
-cd "${INIT_FOLDER}"
-wget -nd -c "${TF_INIT_ROOT}/${TF_INIT_CKPT}"
-tar -xf "${TF_INIT_CKPT}"
-cd "${CURRENT_DIR}"
+#TF_INIT_ROOT="http://download.tensorflow.org/models"
+#TF_INIT_CKPT="deeplabv3_pascal_train_aug_2018_01_04.tar.gz"
+#cd "${INIT_FOLDER}"
+#wget -nd -c "${TF_INIT_ROOT}/${TF_INIT_CKPT}"
+#tar -xf "${TF_INIT_CKPT}"
+#cd "${CURRENT_DIR}"
 
-PASCAL_DATASET="${WORK_DIR}/${DATASET_DIR}/${PASCAL_FOLDER}/tfrecord"
+#PASCAL_DATASET="${WORK_DIR}/${DATASET_DIR}/${PASCAL_FOLDER}/tfrecord"
 
 # Train 10 iterations.
 NUM_ITERATIONS=10
+
+echo " WK!!! TRAIN !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+echo "python ${WORK_DIR}/train.py "
+echo "  --logtostderr "
+echo "  --train_split=trainval" 
+echo "  --model_variant=xception_65" 
+echo "  --atrous_rates=6 "
+echo "  --atrous_rates=12 "
+echo "  --atrous_rates=18 "
+echo "  --output_stride=16 "
+echo "  --decoder_output_stride=4 "
+echo "  --train_crop_size=513,513"
+echo "  --train_batch_size=2 "
+echo "  --training_number_of_steps=${NUM_ITERATIONS}"
+echo "  --fine_tune_batch_norm=true"
+echo "  --tf_initial_checkpoint=${CHECKPOINT_DIR}/deeplabv3_pascal_train_aug_2018_01_04/model.ckpt"
+echo "  --train_logdir=${TRAIN_LOGDIR}"
+echo "  --dataset_dir=${PASCAL_DATASET}"
+
 python "${WORK_DIR}"/train.py \
   --logtostderr \
   --train_split="trainval" \
@@ -83,16 +115,32 @@ python "${WORK_DIR}"/train.py \
   --output_stride=16 \
   --decoder_output_stride=4 \
   --train_crop_size="513,513" \
-  --train_batch_size=4 \
+  --train_batch_size=2 \
   --training_number_of_steps="${NUM_ITERATIONS}" \
   --fine_tune_batch_norm=true \
-  --tf_initial_checkpoint="${INIT_FOLDER}/deeplabv3_pascal_train_aug/model.ckpt" \
+  --tf_initial_checkpoint="${CHECKPOINT_DIR}/deeplabv3_pascal_train_aug_2018_01_04/model.ckpt" \
   --train_logdir="${TRAIN_LOGDIR}" \
   --dataset_dir="${PASCAL_DATASET}"
 
 # Run evaluation. This performs eval over the full val split (1449 images) and
 # will take a while.
 # Using the provided checkpoint, one should expect mIOU=82.20%.
+echo " WK!!! EVAL !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+echo "python ${WORK_DIR}/eval.py "
+echo "  --logtostderr "
+echo "  --eval_split="val" "
+echo "  --model_variant=xception_65" 
+echo "  --atrous_rates=6 "
+echo "  --atrous_rates=12 "
+echo "  --atrous_rates=18 "
+echo "  --output_stride=16 "
+echo "  --decoder_output_stride=4 "
+echo "  --eval_crop_size=513,513" 
+echo "  --checkpoint_dir=${TRAIN_LOGDIR}" 
+echo "  --eval_logdir=${EVAL_LOGDIR}" 
+echo "  --dataset_dir=${PASCAL_DATASET}" 
+echo "  --max_number_of_evaluations=1"
+
 python "${WORK_DIR}"/eval.py \
   --logtostderr \
   --eval_split="val" \
@@ -107,6 +155,8 @@ python "${WORK_DIR}"/eval.py \
   --eval_logdir="${EVAL_LOGDIR}" \
   --dataset_dir="${PASCAL_DATASET}" \
   --max_number_of_evaluations=1
+
+exit
 
 # Visualize the results.
 python "${WORK_DIR}"/vis.py \

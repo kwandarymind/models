@@ -109,6 +109,9 @@ def main(unused_argv):
   tf.logging.info('Evaluating on %s set', FLAGS.eval_split)
 
   with tf.Graph().as_default():
+    #sess = tg.get_default_session()
+    #print(sess)
+
     samples = dataset.get_one_shot_iterator().get_next()
 
     model_options = common.ModelOptions(
@@ -211,13 +214,21 @@ def main(unused_argv):
     contrib_tfprof.model_analyzer.print_model_analysis(
         tf.get_default_graph(),
         tfprof_options=contrib_tfprof.model_analyzer.FLOAT_OPS_OPTIONS)
+
+    # WK!!!
+    session_config = tf.ConfigProto()
+    session_config.gpu_options.allow_growth=True
+    session_config.graph_options.rewrite_options.auto_mixed_precision = 1
+    # WK !!!
+
     contrib_training.evaluate_repeatedly(
         checkpoint_dir=FLAGS.checkpoint_dir,
         master=FLAGS.master,
         eval_ops=list(metrics_to_updates.values()),
         max_number_of_evaluations=num_eval_iters,
         hooks=hooks,
-        eval_interval_secs=FLAGS.eval_interval_secs)
+        eval_interval_secs=FLAGS.eval_interval_secs,
+        config=session_config) # WK!!!
 
 
 if __name__ == '__main__':

@@ -37,12 +37,12 @@ CURRENT_DIR=$(pwd)
 WORK_DIR="${CURRENT_DIR}/deeplab"
 
 # Run model_test first to make sure the PYTHONPATH is correctly set.
-python "${WORK_DIR}"/model_test.py -v
+#python "${WORK_DIR}"/model_test.py -v
 
 # Go to datasets folder and download PASCAL VOC 2012 segmentation dataset.
 DATASET_DIR="datasets"
-cd "${WORK_DIR}/${DATASET_DIR}"
-sh download_and_convert_voc2012.sh
+#cd "${WORK_DIR}/${DATASET_DIR}"
+#sh download_and_convert_voc2012.sh
 
 # Go back to original directory.
 cd "${CURRENT_DIR}"
@@ -66,14 +66,20 @@ TF_INIT_ROOT="http://download.tensorflow.org/models"
 CKPT_NAME="deeplabv3_mnv2_pascal_train_aug"
 TF_INIT_CKPT="${CKPT_NAME}_2018_01_29.tar.gz"
 cd "${INIT_FOLDER}"
-wget -nd -c "${TF_INIT_ROOT}/${TF_INIT_CKPT}"
-tar -xf "${TF_INIT_CKPT}"
+#wget -nd -c "${TF_INIT_ROOT}/${TF_INIT_CKPT}"
+#tar -xf "${TF_INIT_CKPT}"
 cd "${CURRENT_DIR}"
 
 PASCAL_DATASET="${WORK_DIR}/${DATASET_DIR}/${PASCAL_FOLDER}/tfrecord"
 
+echo " TRAIN >>>>>>>>>>> --tf_initial_checkpoint=${INIT_FOLDER}/${CKPT_NAME}/model.ckpt-30000"
+echo " TRAIN >>>>>>>>>>> --train_logdir=${TRAIN_LOGDIR}"
+echo " TRAIN >>>>>>>>>>> --dataset_dir=${PASCAL_DATASET}"
+
+
 # Train 10 iterations.
-NUM_ITERATIONS=10
+NUM_ITERATIONS=6000
+
 python "${WORK_DIR}"/train.py \
   --logtostderr \
   --train_split="trainval" \
@@ -87,6 +93,7 @@ python "${WORK_DIR}"/train.py \
   --train_logdir="${TRAIN_LOGDIR}" \
   --dataset_dir="${PASCAL_DATASET}"
 
+
 # Run evaluation. This performs eval over the full val split (1449 images) and
 # will take a while.
 # Using the provided checkpoint, one should expect mIOU=75.34%.
@@ -99,6 +106,8 @@ python "${WORK_DIR}"/eval.py \
   --eval_logdir="${EVAL_LOGDIR}" \
   --dataset_dir="${PASCAL_DATASET}" \
   --max_number_of_evaluations=1
+
+exit
 
 # Visualize the results.
 python "${WORK_DIR}"/vis.py \
