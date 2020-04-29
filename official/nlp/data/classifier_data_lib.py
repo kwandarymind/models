@@ -20,6 +20,7 @@ from __future__ import print_function
 
 import collections
 import csv
+import importlib
 import os
 
 from absl import logging
@@ -249,6 +250,51 @@ class MrpcProcessor(DataProcessor):
     return examples
 
 
+class QqpProcessor(DataProcessor):
+  """Processor for the QQP data set (GLUE version)."""
+
+  def get_train_examples(self, data_dir):
+    """See base class."""
+    return self._create_examples(
+        self._read_tsv(os.path.join(data_dir, "train.tsv")), "train")
+
+  def get_dev_examples(self, data_dir):
+    """See base class."""
+    return self._create_examples(
+        self._read_tsv(os.path.join(data_dir, "dev.tsv")), "dev")
+
+  def get_test_examples(self, data_dir):
+    """See base class."""
+    return self._create_examples(
+        self._read_tsv(os.path.join(data_dir, "test.tsv")), "test")
+
+  def get_labels(self):
+    """See base class."""
+    return ["0", "1"]
+
+  @staticmethod
+  def get_processor_name():
+    """See base class."""
+    return "QQP"
+
+  def _create_examples(self, lines, set_type):
+    """Creates examples for the training and dev sets."""
+    examples = []
+    for (i, line) in enumerate(lines):
+      if i == 0:
+        continue
+      guid = "%s-%s" % (set_type, line[0])
+      try:
+        text_a = line[3]
+        text_b = line[4]
+        label = line[5]
+      except IndexError:
+        continue
+      examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b,
+                                   label=label))
+    return examples
+
+
 class ColaProcessor(DataProcessor):
   """Processor for the CoLA data set (GLUE version)."""
 
@@ -403,6 +449,7 @@ class TfdsProcessor(DataProcessor):
   (TFDS) for the meaning of individual parameters):
     dataset: Required dataset name (potentially with subset and version number).
     data_dir: Optional TFDS source root directory.
+    module_import: Optional Dataset module to import.
     train_split: Name of the train split (defaults to `train`).
     dev_split: Name of the dev split (defaults to `validation`).
     test_split: Name of the test split (defaults to `test`).
@@ -418,6 +465,9 @@ class TfdsProcessor(DataProcessor):
                process_text_fn=tokenization.convert_to_unicode):
     super(TfdsProcessor, self).__init__(process_text_fn)
     self._process_tfds_params_str(tfds_params)
+    if self.module_import:
+      importlib.import_module(self.module_import)
+
     self.dataset, info = tfds.load(self.dataset_name, data_dir=self.data_dir,
                                    with_info=True)
     self._labels = list(range(info.features[self.label_key].num_classes))
@@ -428,6 +478,7 @@ class TfdsProcessor(DataProcessor):
     d = {k.strip(): v.strip() for k, v in tuples}
     self.dataset_name = d["dataset"]  # Required.
     self.data_dir = d.get("data_dir", None)
+    self.module_import = d.get("module_import", None)
     self.train_split = d.get("train_split", "train")
     self.dev_split = d.get("dev_split", "validation")
     self.test_split = d.get("test_split", "test")

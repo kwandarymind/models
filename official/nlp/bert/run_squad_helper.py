@@ -88,6 +88,7 @@ def define_common_squad_flags():
       'another.')
 
   common_flags.define_common_bert_flags()
+  common_flags.define_gin_flags()
 
 
 FLAGS = flags.FLAGS
@@ -251,6 +252,7 @@ def train_squad(strategy,
     optimizer = optimization.create_optimizer(FLAGS.learning_rate,
                                               steps_per_epoch * epochs,
                                               warmup_steps,
+                                              FLAGS.end_lr,
                                               FLAGS.optimizer_type)
 
     squad_model.optimizer = performance.configure_optimizer(
